@@ -10,27 +10,27 @@ enum D{
 struct Subject{
 	name:	String,
 	sched:	Vec<(D, usize, usize)>,
-	sched_l:	Vec<(D, usize, usize)>
+	sched_l:Vec<(D, usize, usize)>
 }
 
 
-fn check_conflict(class: &(D, usize, usize), timetable: &[[String; 20]; 5]) -> bool{
+fn check_conflict(class: &(D, usize, usize), timetable: &[[String; 11]; 5]) -> bool{
 	for i in class.1 ..= class.2 {
-		if timetable[class.0 as usize][i] != "" {
+		if timetable[class.0 as usize][i-9] != "" {
 			return true;
 		}
 	}
 	return false;
 }
 
-fn add_class(class: &(D, usize, usize), name: &String, timetable: &mut [[String; 20]; 5]){
+fn add_class(class: &(D, usize, usize), name: String, timetable: &mut [[String; 11]; 5]){
 	for i in class.1 ..= class.2 {
-		timetable[class.0 as usize][i] = name.clone();
+		timetable[class.0 as usize][i-9] = name.clone();
 	}
 }
 
-fn remember(timetable: Option<[[String; 20]; 5]>) -> Vec<[[String; 20]; 5]>{
-	static mut ALL_TIMETABLES: Vec<[[String; 20]; 5]> = Vec::new();
+fn remember(timetable: Option<[[String; 11]; 5]>) -> Vec<[[String; 11]; 5]>{
+	static mut ALL_TIMETABLES: Vec<[[String; 11]; 5]> = Vec::new();
 	unsafe {
 		if timetable.is_some() {
 			ALL_TIMETABLES.push(timetable.unwrap());
@@ -39,20 +39,20 @@ fn remember(timetable: Option<[[String; 20]; 5]>) -> Vec<[[String; 20]; 5]>{
 	}
 }
 
-fn solve(subjects: Vec<Subject>, timetable: [[String; 20]; 5]){
+fn solve(subjects: Vec<Subject>, timetable: [[String; 11]; 5]){
 	if subjects.len() == 1{
 		for each_sched in &subjects[0].sched{
 			if check_conflict(&each_sched, &timetable){
 				continue;
 			}
 			let mut temptable = timetable.clone();
-			add_class(each_sched, &subjects[0].name, &mut temptable);
+			add_class(each_sched, subjects[0].name.clone(), &mut temptable);
 			for each_lab in &subjects[0].sched_l{
 				if check_conflict(&each_lab, &temptable) {
 					continue;
 				}
 				let mut temp2ble = temptable.clone();
-				add_class(each_lab, &subjects[0].name, &mut temp2ble);
+				add_class(each_lab, subjects[0].name.clone() + " lab", &mut temp2ble);
 	
 				remember(Some(temp2ble));
 			}
@@ -64,13 +64,13 @@ fn solve(subjects: Vec<Subject>, timetable: [[String; 20]; 5]){
 			continue;
 		}
 		let mut temptable = timetable.clone();
-		add_class(each_sched, &subjects[0].name, &mut temptable);
+		add_class(each_sched, subjects[0].name.clone(), &mut temptable);
 		for each_lab in &subjects[0].sched_l{
 			if check_conflict(&each_lab, &temptable) {
 				continue;
 			}
 			let mut temp2ble = temptable.clone();
-			add_class(each_lab, &subjects[0].name, &mut temp2ble);
+			add_class(each_lab, subjects[0].name.clone() + " lab", &mut temp2ble);
 
 			let mut subjects_minus = subjects.clone();
 			subjects_minus.remove(0);
@@ -100,8 +100,8 @@ fn main() {
 				 (D::Fri, 9,10)].to_vec()
 	}]);
 
-	let timetable: [[String; 20]; 5] = Default::default();
+	let timetable: [[String; 11]; 5] = Default::default();
 	solve(subjects, timetable);
 	
-	print!("done!");
+	print!("done!\n");
 }
