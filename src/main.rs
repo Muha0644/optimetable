@@ -1,5 +1,8 @@
+pub mod classes;
 #[macro_use] extern crate prettytable;
+use classes::{get_subjects, empty_day_incentive};
 use prettytable::Table;
+
 
 #[derive(Copy, Clone)]
 enum D{
@@ -10,7 +13,7 @@ enum D{
 	Fri = 4
 }
 #[derive(Clone)]
-struct Subject{
+pub struct Subject{
 	name:	String,
 	sched:	Vec<(D, usize, usize)>,
 	sched_l:Vec<(D, usize, usize)>
@@ -96,24 +99,7 @@ fn print_table(timetable: &[[String; 11]; 5]){
 	table.printstd();
 }
 fn main() {
-	let subjects = Vec::from([  //todo: make this shit less tedious to do
-	Subject{
-		name:	"Calc 2".to_string(),
-		sched:	[(D::Mon, 12,14), (D::Mon, 15,17)].to_vec(),
-		sched_l:[(D::Mon, 15,16), (D::Tue, 14,15), (D::Thu, 9,10)].to_vec()
-	},
-    Subject{
-		name:	"DBI".to_string(),
-		sched:	[(D::Mon, 9,10), (D::Mon, 11,12)].to_vec(),
-		sched_l:[(D::Tue, 9,10), (D::Tue, 11,12), (D::Tue, 13,14), (D::Wed, 9,10),
-				 (D::Thu, 9,10), (D::Thu, 11,12), (D::Thu, 17,18)].to_vec(),
-	},
-	Subject{
-		name: 	"Prog 2".to_string(),
-		sched:	[(D::Wed, 17,19), (D::Fri, 17,19)].to_vec(),
-		sched_l:[(D::Tue, 9,10), (D::Thu, 9,10), (D::Thu, 11,12), (D::Thu, 13,14),
-				 (D::Fri, 9,10)].to_vec()
-	}]);
+	let subjects = get_subjects();
 
 	let timetable: [[String; 11]; 5] = Default::default();
 	generate_perm(subjects, timetable);
@@ -127,7 +113,7 @@ fn main() {
 		let mut length = 0;
 		for day in each {
 			if day == &empty_day {
-				length -= 1; //add incentive to prefer empty days
+				length -= empty_day_incentive(); //add incentive to prefer empty days
 				continue;
 			};
 			let mut begin = 0;
@@ -147,8 +133,12 @@ fn main() {
 		}
 	}
 
+	if besttables.is_empty() {
+		println!("ERROR: no non-conflicting solution could be found. Are the subjects entered in correctly?")
+	}
+	println!("Best score: {}", bestsize);
 	for each in besttables {
-		println!("{}", bestsize);
+		println!("Solution:");
 		print_table(&each);
 	}
 }
