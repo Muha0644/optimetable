@@ -3,8 +3,9 @@ pub mod classes;
 use classes::{get_subjects, empty_day_incentive};
 use prettytable::Table;
 
+type Timetable = [[String; 11]; 5];
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone,PartialEq)]
 enum D{
 	Mon = 0,
 	Tue = 1,
@@ -20,23 +21,27 @@ pub struct Subject{
 }
 
 
-fn check_conflict(class: &(D, usize, usize), timetable: &[[String; 11]; 5]) -> bool{
+fn check_conflict(class: &(D, usize, usize), timetable: &Timetable) -> bool{
 	for i in class.1 ..= class.2 {
 		if timetable[class.0 as usize][i-9] != "" {
 			return true;
 		}
 	}
+	if class.0  == D::Fri && ([12, 13].contains(&class.1) || [12, 13].contains(&class.2)) {
+		return true
+	}
+
 	return false;
 }
 
-fn add_class(class: &(D, usize, usize), name: String, timetable: &mut [[String; 11]; 5]){
+fn add_class(class: &(D, usize, usize), name: String, timetable: &mut Timetable){
 	for i in class.1 ..= class.2 {
 		timetable[class.0 as usize][i-9] = name.clone();
 	}
 }
 
-fn remember(timetable: Option<[[String; 11]; 5]>) -> Vec<[[String; 11]; 5]>{
-	static mut ALL_TIMETABLES: Vec<[[String; 11]; 5]> = Vec::new();
+fn remember(timetable: Option<Timetable>) -> Vec<Timetable>{
+	static mut ALL_TIMETABLES: Vec<Timetable> = Vec::new();
 	unsafe {
 		if timetable.is_some() {
 			ALL_TIMETABLES.push(timetable.unwrap());
@@ -45,7 +50,7 @@ fn remember(timetable: Option<[[String; 11]; 5]>) -> Vec<[[String; 11]; 5]>{
 	}
 }
 
-fn generate_perm(subjects: Vec<Subject>, timetable: [[String; 11]; 5]){
+fn generate_perm(subjects: Vec<Subject>, timetable: Timetable){
 	if subjects.len() == 1{
 		for each_sched in &subjects[0].sched{
 			if check_conflict(&each_sched, &timetable){
@@ -86,7 +91,7 @@ fn generate_perm(subjects: Vec<Subject>, timetable: [[String; 11]; 5]){
 	}
 }
 
-fn print_table(timetable: &[[String; 11]; 5]){
+fn print_table(timetable: &Timetable){
 	let mut table = Table::new();
 	table.add_row(row![9,10,11,12,13,14,15,16,17,18,19]);
 	for day in timetable {
@@ -101,13 +106,14 @@ fn print_table(timetable: &[[String; 11]; 5]){
 fn main() {
 	let subjects = get_subjects();
 
-	let timetable: [[String; 11]; 5] = Default::default();
+	let timetable: Timetable = Default::default();
 	generate_perm(subjects, timetable);
 	
 	let allofthem = remember(None);
 
 	let empty_day: [String; 11] = Default::default();
-	let mut besttables: Vec<[[String; 11] ;5]> = vec![];
+	let mut besttables: Vec<Timetable> = vec![];
+	let mut secbest: Vec<Timetable> = vec![];
 	let mut bestsize: usize = 9999;
 	for each in &allofthem { //find the one with smallest time
 		let mut length = 0;
@@ -125,7 +131,9 @@ fn main() {
 			length += end - begin + 1;
 		}
 		if length < bestsize {
-			besttables.clear();
+			//secbest.clear();
+			secbest = besttables.clone();
+			//besttables.clear();
 			besttables.push(each.clone());
 			bestsize = length;
 		} else if length == bestsize {
@@ -137,8 +145,14 @@ fn main() {
 		println!("ERROR: no non-conflicting solution could be found. Are the subjects entered in correctly?")
 	}
 	println!("Best score: {}", bestsize);
+	//print best
 	for each in besttables {
 		println!("Solution:");
 		print_table(&each);
 	}
+	//print second best
+	//for each in secbest {
+	//	println!("Second best Solution:");
+	//	print_table(&each);
+	//}
 }
